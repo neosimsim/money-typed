@@ -72,15 +72,35 @@ testTrades =
   , Trade 50 (mkSomeMoney SJPY 5) (Ticker "4151.T")
   ]
 
-sumNotionals :: [Trade] -> Money 'GBP
-sumNotionals [] = Money 0
-sumNotionals (t:ts) =
+-- | Sum notionals over all trades with a given currency.
+sumNotionals :: SCurrency c -> [Trade] -> Money c
+sumNotionals _ [] = Money 0
+sumNotionals sCurrency (t:ts) =
   case tPrice t of
-    SomeMoney SGBP money -> multiply money (tQty t) `plus` sumNotionals ts
-    SomeMoney _ _        -> sumNotionals ts
+    SomeMoney priceSCurrencry money ->
+      case sCurrency %~ priceSCurrencry of
+        Proved Refl -> multiply money (tQty t) `plus` sumNotionals sCurrency ts
+        Disproved _ -> sumNotionals sCurrency ts
+
+-- | @sumNotionals@ but with currency implicitly given.
+sumNotionals' ::
+     forall c. SingI c
+  => [Trade]
+  -> Money c
+sumNotionals' [] = Money 0
+sumNotionals' (t:ts) =
+  case tPrice t of
+    SomeMoney priceSCurrencry money ->
+      case priceSCurrencry %~ sing @c of
+        Proved Refl -> multiply money (tQty t) `plus` sumNotionals' ts
+        Disproved _ -> sumNotionals' ts
 
 main :: IO ()
 main = do
   putStrLn "Hello, Haskell!"
   print $ SomeMoney SEUR (Money 10.3)
-  print $ sumNotionals testTrades
+  print $ sumNotionals SEUR testTrades
+  print $ sumNotionals SGBP testTrades
+  print $ sumNotionals SUSD testTrades
+  print $ sumNotionals SJPY testTrades
+  print $ sumNotionals' @'JPY testTrades
