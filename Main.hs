@@ -36,6 +36,12 @@ newtype Money (currency :: Currency) =
     }
   deriving newtype (Show)
 
+prettyMoney ::
+     forall c. (SingI c)
+  => Money c
+  -> String
+prettyMoney m = show m ++ " " ++ show (fromSing (sing @c))
+
 plus :: Money c -> Money c -> Money c
 plus (Money v1) (Money v2) = Money $ v1 + v2
 
@@ -99,8 +105,8 @@ main :: IO ()
 main = do
   putStrLn "Hello, Haskell!"
   print $ SomeMoney SEUR (Money 10.3)
-  print $ sumNotionals SEUR testTrades
-  print $ sumNotionals SGBP testTrades
-  print $ sumNotionals SUSD testTrades
-  print $ sumNotionals SJPY testTrades
-  print $ sumNotionals' @'JPY testTrades
+  putStrLn . prettyMoney $ sumNotionals SEUR testTrades
+  putStrLn . prettyMoney $ sumNotionals SGBP testTrades
+  putStrLn . prettyMoney $ sumNotionals SUSD testTrades
+  putStrLn . prettyMoney $ sumNotionals SJPY testTrades
+  putStrLn . prettyMoney $ sumNotionals' @'JPY testTrades
