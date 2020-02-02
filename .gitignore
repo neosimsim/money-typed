@@ -1,2 +1,5 @@
-dist/
+*.agdai
+MAlonzo/
+Money
 dist-newstyle/
+dist/
